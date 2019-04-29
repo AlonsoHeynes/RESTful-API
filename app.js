@@ -30,61 +30,107 @@ const articleSchema = {
 const Article = mongoose.model("Article", articleSchema);
 
 
-/*--------------------------------------------------------------
-REED (GET) THE ARTICLES FROM THE DABASE
---------------------------------------------------------------*/
-app.get("/articles", function(req, res){
-    Article.find(function(err, foundArticles){
-        if(!err){
-            res.send(foundArticles);
-        } else {
-            res.send(err);
+
+/* --------------------------------------------------------------------
+REQUEST TARGETTING ALL ARTICLES
+---------------------------------------------------------------------*/ 
+app.route('/articles')
+    // READ (GET) THE ARTICLES FROM THE DABASE
+    .get(function(req, res){
+            Article.find(function(err, foundArticles){
+                if(!err){
+                    res.send(foundArticles);
+                } else {
+                    res.send(err);
+                }
+            });
         }
-    });
-});
-
-/*--------------------------------------------------------------
-WRITE (POST) THE ARTICLES FROM THE DABASE /MAKE REQUEST TROUGHT POSTMAN AND SAVE IT INTO OUR MONGO DB
---------------------------------------------------------------*/
-app.post("/articles", function(req, res){
-    //console.log(req.body.title);
-    //console.log(req.body.content);
-
-    const newArticle = new Article({
-        title:  req.body.title,
-        content: req.body.content
-    });
-    newArticle.save(function(err){
-        if (!err) {
-            res.send("Successfully added new article.");
-        } else {
-            res.send(err);
+    )
+    // WRITE (POST) THE ARTICLES FROM THE DABASE /MAKE REQUEST TROUGHT POSTMAN AND SAVE IT INTO OUR MONGO DB
+    .post(function(req, res){
+            //console.log(req.body.title);
+            //console.log(req.body.content);
+        
+            const newArticle = new Article({
+                title:  req.body.title,
+                content: req.body.content
+            });
+            newArticle.save(function(err){
+                if (!err) {
+                    res.send("Successfully added new article.");
+                } else {
+                    res.send(err);
+                }
+            });
         }
+    )
+    // DELETE ARTICLES FROM THE DABASE 
+    .delete(function(req, res){
+        Article.deleteMany(function(err){
+            if(!err){
+                res.send("Successfully deleted all articles.")
+            } else {
+                res.send(err);
+            }
+        });
     });
-});
+
+/* --------------------------------------------------------------------
+REQUEST TARGETTING A SPECIFIC ARTICLE
+---------------------------------------------------------------------*/ 
+app.route('/Articles/:articleTitle')
+    // 
+    .get(function(req, res){
+        Article.findOne({title: req.params.articleTitle},function(err, foundArticle){
+            if(foundArticle){
+                res.send(foundArticle);
+            } else {
+                res.send("No articles matching that title was found.");
+            }
+        });
+    })
+    .put(function(req, res){
+        Article.update(
+          {title: req.params.articleTitle},
+          {title: req.body.title, content: req.body.content},
+          {overwrite: true},
+          function(err){
+            if(!err){
+              res.send("Successfully updated the selected article.");
+            }
+          }
+        );
+    })
+    .patch(function(req, res){
+        Article.update(
+          {title: req.params.articleTitle},
+          {$set: req.body},
+          function(err){
+            if(!err){
+              res.send("Successfully updated article.");
+            } else {
+                res.send(err);
+            }
+          }
+        );
+    })
+    .delete(function(req, res){
+        Article.deleteOne(
+          {title: req.params.articleTitle},
+          function(err){
+            if (!err){
+              res.send("Successfully deleted the corresponding article.");
+            } else {
+              res.send(err);
+            }
+          }
+        );
+      });
 
 
-/*--------------------------------------------------------------
-DELETE ARTICLES FROM THE DABASE 
---------------------------------------------------------------*/
-app.delete("/articles", function(req, res){
-    Article.deleteMany(function(err){
-        if(!err){
-            res.send("Successfully deleted all articles.")
-        } else {
-            res.send(err);
-        }
-    });
-});
-
-
-
-
-
-
-
-//TODO
-
+/* --------------------------------------------------------------------
+SET UP SERVER
+---------------------------------------------------------------------*/    
 app.listen(3000, function() {
   console.log("Server started on port 3000");
 });
